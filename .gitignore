@@ -76,3 +76,22 @@ apis/gen-go/apidocs.swagger.json
 
 
 .next/
+
+# Virtual environments
+venv/
+*/venv/
+app/aitools/venv/
+
+# Local development files
+*.local
+.env*
+!.env.example
+
+# Binary executables (generated during build)
+app/aistudio/aistudio
+app/aistudio/main
+*/aistudio
+*/main
+
+# Cookies and session files
+cookies.txt
