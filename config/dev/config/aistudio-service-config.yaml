@@ -14,7 +14,7 @@ JWTAuthnSecrets:
   filePath: "secrets/jwt-secrets.yaml"
   secret: d8be6-secret
 authnSecrets:
-  patfilePathh: "secrets/authn-secrets.yaml"
+  filePath: "secrets/authn-secrets.yaml"
   secret: bc7ee-secret
 networkConfigFile: network/network-config.yaml
 serverCerts:

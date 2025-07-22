@@ -435,15 +435,18 @@ func (m *JwtLog) SetAccountId(accountId string) {
 	}
 }
 
+// 1: Added AccessTokenCreatedCount field to track access token usage
 type RefreshTokenLog struct {
-	VapusBase    `bun:",embed" json:"base,omitempty" yaml:"base,omitempty" toml:"base,omitempty"`
-	JwtId        string `bun:"jwt_id" json:"jwtId,omitempty" yaml:"jwtId,omitempty" toml:"jwtId,omitempty"`
-	TokenHash    string `bun:"token_hash" json:"tokenHash,omitempty" yaml:"tokenHash,omitempty" toml:"tokenHash,omitempty"`
-	UserId       string `bun:"user_id" json:"userId,omitempty" yaml:"userId,omitempty" toml:"userId,omitempty"`
-	Organization string `bun:"organization" json:"organization,omitempty" yaml:"organization,omitempty" toml:"organization,omitempty"`
-	Scope        string `bun:"scope" json:"scope,omitempty" yaml:"scope,omitempty" toml:"scope,omitempty"`
-	ValidTill    int64  `bun:"valid_till" json:"validTill,omitempty" yaml:"validTill,omitempty" toml:"validTill,omitempty"`
+	VapusBase                `bun:",embed" json:"base,omitempty" yaml:"base,omitempty" toml:"base,omitempty"`
+	JwtId                    string `bun:"jwt_id" json:"jwtId,omitempty" yaml:"jwtId,omitempty" toml:"jwtId,omitempty"`
+	TokenHash                string `bun:"token_hash" json:"tokenHash,omitempty" yaml:"tokenHash,omitempty" toml:"tokenHash,omitempty"`
+	UserId                   string `bun:"user_id" json:"userId,omitempty" yaml:"userId,omitempty" toml:"userId,omitempty"`
+	Organization             string `bun:"organization" json:"organization,omitempty" yaml:"organization,omitempty" toml:"organization,omitempty"`
+	Scope                    string `bun:"scope" json:"scope,omitempty" yaml:"scope,omitempty" toml:"scope,omitempty"`
+	ValidTill                int64  `bun:"valid_till" json:"validTill,omitempty" yaml:"validTill,omitempty" toml:"validTill,omitempty"`
+	AccessTokenCreatedCount  int64  `bun:"access_token_created_count" json:"accessTokenCreatedCount,omitempty" yaml:"accessTokenCreatedCount,omitempty" toml:"accessTokenCreatedCount,omitempty"`
 }
+// 1
 
 func (m *RefreshTokenLog) SetAccountId(accountId string) {
 	if m != nil {

@@ -122,7 +122,7 @@ func (dmc *VapusDataUsers) AuthzManager(ctx context.Context, request *pb.AuthzMa
 	}
 	response := agent.GetResult()
 	agent.LogAgent()
-	response.DmResp = pbtools.HandleDMResponse(ctx, "VdcDeployment action executed successfully", "200")
+	response.DmResp = pbtools.HandleDMResponse(ctx, "auth manager action executed successfully", "200")
 	return response, nil
 }
 
@@ -200,19 +200,24 @@ func (dmc *VapusDataUsers) LoginCallback(ctx context.Context, request *pb.LoginC
 	}, nil
 }
 
-// func (dmc *VapusDataUsers) LoginRefreshToken(ctx context.Context, request *pb.LoginCallBackRequest) (*pb.AccessTokenResponse, error) {
-// 	validTill := time.Now().Add(utils.DEFAULT_PLATFORM_AT_VALIDITY)
-// 	accessToken, scope, err := dmc.DMServices.GeneratePlatformAccessToken(ctx, "", "", "", nil)
-// 	if err != nil {
-// 		return nil, pbtools.HandleGrpcError(dmerrors.DMError(apperr.ErrUnAuthenticated, err), grpccodes.Unauthenticated)
-// 	}
-// 	return &pb.AccessTokenResponse{
-// 		Token: &pb.AccessToken{
-// 			AccessToken: accessToken,
-// 			ValidTill:   validTill.Unix(),
-// 			ValidFrom:   dmutils.GetEpochTime(),
-// 		},
-// 		TokenScope: scope,
-// 		DmResp:     pbtools.HandleDMResponse(ctx, utils.ACCESS_TOKEN_CREATED, "201"),
-// 	}, nil
-// }
+// Task 3: Added controller methods for new refresh token endpoints
+func (dmc *VapusDataUsers) GenerateRefreshToken(ctx context.Context, request *pb.RefreshTokenGenerationRequest) (*pb.RefreshTokenGenerationResponse, error) {
+	dmc.logger.Info().Msg("Generating refresh token with custom expiry...")
+	response, err := dmc.DMServices.GenerateRefreshTokenHandler(ctx, request)
+	if err != nil {
+		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal) //nolint:wrapcheck
+	}
+	response.DmResp = pbtools.HandleDMResponse(ctx, "Refresh token generated successfully", "201")
+	return response, nil
+}
+
+func (dmc *VapusDataUsers) GenerateAccessTokenFromRefresh(ctx context.Context, request *pb.AccessTokenFromRefreshRequest) (*pb.AccessTokenFromRefreshResponse, error) {
+	dmc.logger.Info().Msg("Generating access token from refresh token...")
+	response, err := dmc.DMServices.GenerateAccessTokenFromRefreshHandler(ctx, request)
+	if err != nil {
+		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal) //nolint:wrapcheck
+	}
+	response.DmResp = pbtools.HandleDMResponse(ctx, "Access token generated successfully", "200")
+	return response, nil
+}
+// End Task 3

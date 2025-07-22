@@ -23,7 +23,7 @@ func ValidateSHA256(data, salt, storedHash string) bool {
 
 func GenerateSHA3_256(data, salt string) string {
 	combined := data + salt
-	hash := sha3.New512()
+	hash := sha3.New256()
 	hash.Write([]byte(combined))
 	hashedBytes := hash.Sum(nil)
 	base64Hash := base64.StdEncoding.EncodeToString(hashedBytes)
@@ -38,7 +38,7 @@ func ValidateSHA3_256(data, salt, storedHash string) bool {
 
 func GenerateSHA3_256FromBytes(data, salt []byte) string {
 	combined := string(data) + string(salt)
-	hash := sha3.New512()
+	hash := sha3.New256()
 	hash.Write([]byte(combined))
 	hashedBytes := hash.Sum(nil)
 	base64Hash := base64.StdEncoding.EncodeToString(hashedBytes)

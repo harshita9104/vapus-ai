@@ -125,6 +125,33 @@ service UserManagementService {
             body: "*"
         };
     }
+
+    // Task 2: Added new RPC endpoints for specific refresh token requirements
+    /**
+     * Generates a refresh token with custom expiry.
+     * @param {RefreshTokenGenerationRequest} request - The request object.
+     * @returns {RefreshTokenGenerationResponse} The response object.
+     */
+    rpc GenerateRefreshToken(RefreshTokenGenerationRequest) returns (RefreshTokenGenerationResponse) {
+        option (google.api.http) = {
+            post: "/api/v1alpha1/auth/refresh-token/generate"
+            body: "*"
+        };
+    }
+
+    /**
+     * Generates an access token using a refresh token.
+     * @param {AccessTokenFromRefreshRequest} request - The request object.
+     * @returns {AccessTokenFromRefreshResponse} The response object.
+     */
+    rpc GenerateAccessTokenFromRefresh(AccessTokenFromRefreshRequest) returns (AccessTokenFromRefreshResponse) {
+        option (google.api.http) = {
+            post: "/api/v1alpha1/auth/access-token/from-refresh"
+            body: "*"
+        };
+    }
+    // End Task 2
+
 }
 
 enum UserManagerActions {
@@ -287,4 +314,38 @@ message RefreshTokenGetterRequest {
 message RefreshTokenResponse {
     models.v1alpha1.DMResponse dm_resp = 1; // @gotags: yaml:"dmResp"
     repeated models.v1alpha1.RefreshToken output = 2; // @gotags: yaml:"output"
+}
+
+/**
+ * RefreshTokenGenerationRequest is used to request the generation of a refresh token with specific parameters.
+ */
+message RefreshTokenGenerationRequest {
+    string organization_id = 1; // @gotags: yaml:"organizationId"
+    int64 expiry_time_seconds = 2; // @gotags: yaml:"expiryTimeSeconds"
+}
+
+/**
+ * RefreshTokenGenerationResponse is the response message for a refresh token generation request.
+ */
+message RefreshTokenGenerationResponse {
+    models.v1alpha1.DMResponse dm_resp = 1; // @gotags: yaml:"dmResp"
+    string refresh_token = 2; // @gotags: yaml:"refreshToken"
+    int64 expiry_time_seconds = 3; // @gotags: yaml:"expiryTimeSeconds"
+}
+
+/**
+ * AccessTokenFromRefreshRequest is used to request the generation of an access token using a refresh token.
+ */
+message AccessTokenFromRefreshRequest {
+    string refresh_token = 1; // @gotags: yaml:"refreshToken"
+    string organization_id = 2; // @gotags: yaml:"organizationId"
+}
+
+/**
+ * AccessTokenFromRefreshResponse is the response message for an access token generation request using a refresh token.
+ */
+message AccessTokenFromRefreshResponse {
+    models.v1alpha1.DMResponse dm_resp = 1; // @gotags: yaml:"dmResp"
+    string access_token = 2; // @gotags: yaml:"accessToken"
+    int64 expiry_time_seconds = 3; // @gotags: yaml:"expiryTimeSeconds"
 }

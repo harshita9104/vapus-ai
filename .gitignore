@@ -77,7 +77,7 @@ apis/gen-go/apidocs.swagger.json
 
 .next/
 
-# Virtual environments
+# Python virtual environments
 venv/
 */venv/
 app/aitools/venv/
@@ -93,5 +93,6 @@ app/aistudio/main
 */aistudio
 */main
 
-# Cookies and session files
-cookies.txt
+
+# Keep start-services.sh out of git for local setup
+start-services.sh

@@ -251,3 +251,21 @@ func (ds *AIStudioDMStore) GetUser(ctx context.Context, userId string, ctxClaim 
 	}
 	return result[0], err
 }
+
+// Task 1A: Added method to increment AccessTokenCreatedCount for refresh token usage tracking
+func (ds *AIStudioDMStore) IncrementRefreshTokenUsage(ctx context.Context, tokenHash string, ctxClaim map[string]string) error {
+	_, err := ds.Db.PostgresClient.DB.NewUpdate().
+		Model((*models.RefreshTokenLog)(nil)).
+		ModelTableExpr(apppkgs.RefreshTokenLogsTable).
+		Set("access_token_created_count = access_token_created_count + 1").
+		Set("updated_at = ?", dmutils.GetEpochTime()).
+		Set("updated_by = ?", ctxClaim[encryption.ClaimUserIdKey]).
+		Where("token_hash = ?", tokenHash).
+		Exec(ctx)
+	if err != nil {
+		logger.Err(err).Ctx(ctx).Msg("error while incrementing refresh token usage count")
+		return err
+	}
+	return nil
+}
+// End Task 1A

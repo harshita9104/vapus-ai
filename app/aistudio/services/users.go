@@ -135,7 +135,9 @@ func (dms *AIStudioServices) GeneratePlatformAccessToken(ctx context.Context, id
 			return "", 0, dmerrors.DMError(err, nil)
 		}
 	} else if refreshToken != "" {
-		refreshToken = encryption.GenerateSHA256(refreshToken, "")
+		// Task 1B: Updated from SHA256 to SHA3 for enhanced security as per requirements
+		refreshToken = encryption.GenerateSHA3_256(refreshToken, "")
+		// End Task 1B
 		rtObj, err := dms.DMStore.GetPlatformRTinfo(ctx, refreshToken, ctxClaim)
 		if err != nil {
 			dms.Logger.Err(err).Msg("invalid token, refresh token doesn't exists")
@@ -206,3 +208,144 @@ func (dms *AIStudioServices) GeneratePlatformAccessToken(ctx context.Context, id
 	}, ctxClaim)
 	return token, mpb.AccessTokenScope_ORG_TOKEN, nil
 }
+
+// Task 4: Added service methods for new refresh token endpoints
+func (dms *AIStudioServices) GenerateRefreshTokenHandler(ctx context.Context, request *pb.RefreshTokenGenerationRequest) (*pb.RefreshTokenGenerationResponse, error) {
+	// Get context claim for authentication
+	vapusPlatformClaim, ok := encryption.GetCtxClaim(ctx)
+	if !ok {
+		dms.Logger.Error().Ctx(ctx).Msg("error while getting claim metadata from context")
+		return nil, encryption.ErrInvalidJWTClaims
+	}
+
+	// Validate organization exists
+	organizationObj, err := dms.DMStore.GetOrganization(ctx, request.GetOrganizationId(), vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while fetching organization")
+		return nil, dmerrors.DMError(apperr.ErrOrganization404, err)
+	}
+
+	// Get user from context
+	userObj, err := dms.DMStore.GetUser(ctx, vapusPlatformClaim[encryption.ClaimUserIdKey], vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while fetching user")
+		return nil, dmerrors.DMError(apperr.ErrUser404, err)
+	}
+
+	// Set default expiry if not provided (6 months = 180 days)
+	expiryTimeSeconds := request.GetExpiryTimeSeconds()
+	if expiryTimeSeconds == 0 {
+		expiryTimeSeconds = int64(utils.DEFAULT_PLATFORM_RT_VALIDITY.Seconds()) * 6 // 6 months default
+	}
+
+	// Calculate expiry time
+	validTill := time.Now().Add(time.Duration(expiryTimeSeconds) * time.Second)
+
+	// Generate refresh token using existing helper function
+	tokenId, refreshToken, err := generateRefreshToken(userObj, organizationObj.VapusID, validTill, false)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while generating refresh token")
+		return nil, dmerrors.DMError(apperr.ErrInternalError, err)
+	}
+
+	// Hash the refresh token using SHA3 for storage (only store hash, not raw token)
+	refreshTokenHash := encryption.GenerateSHA3_256(refreshToken, "")
+
+	// Create refresh token log entry
+	refreshTokenLog := &models.RefreshTokenLog{
+		JwtId:                   tokenId,
+		TokenHash:               refreshTokenHash, // Store only the hash
+		UserId:                  userObj.UserId,
+		Organization:            organizationObj.VapusID,
+		ValidTill:               validTill.Unix(),
+		AccessTokenCreatedCount: 0, // Initialize usage count to 0
+	}
+	refreshTokenLog.Status = mpb.CommonStatus_ACTIVE.String() // Set status after creation
+
+	// Save to database
+	err = dms.DMStore.LogPlatformRTinfo(ctx, refreshTokenLog, vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while saving refresh token log")
+		return nil, dmerrors.DMError(apperr.ErrInternalError, err)
+	}
+
+	// Return the raw refresh token to client (not the hash)
+	return &pb.RefreshTokenGenerationResponse{
+		RefreshToken:      refreshToken, // Return raw token, not hash
+		ExpiryTimeSeconds: expiryTimeSeconds,
+	}, nil
+}
+
+func (dms *AIStudioServices) GenerateAccessTokenFromRefreshHandler(ctx context.Context, request *pb.AccessTokenFromRefreshRequest) (*pb.AccessTokenFromRefreshResponse, error) {
+	// Get context claim for authentication
+	vapusPlatformClaim, ok := encryption.GetCtxClaim(ctx)
+	if !ok {
+		dms.Logger.Error().Ctx(ctx).Msg("error while getting claim metadata from context")
+		return nil, encryption.ErrInvalidJWTClaims
+	}
+
+	// Hash the provided refresh token to match stored hash
+	refreshTokenHash := encryption.GenerateSHA3_256(request.GetRefreshToken(), "")
+
+	// Get refresh token info from database using hash
+	rtObj, err := dms.DMStore.GetPlatformRTinfo(ctx, refreshTokenHash, vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("invalid refresh token, doesn't exist in database")
+		return nil, dmerrors.DMError(apperr.ErrRefreshToken404, err)
+	}
+
+	// Validate refresh token expiry
+	if rtObj.ValidTill < time.Now().Unix() {
+		dms.Logger.Error().Msg("refresh token has expired")
+		return nil, dmerrors.DMError(apperr.ErrRefreshTokenExpired, nil)
+	}
+
+	// Validate refresh token status
+	if rtObj.Status != mpb.CommonStatus_ACTIVE.String() {
+		dms.Logger.Error().Msg("refresh token is not active")
+		return nil, dmerrors.DMError(apperr.ErrRefreshTokenInactive, nil)
+	}
+
+	// Validate organization matches (if provided)
+	if request.GetOrganizationId() != "" && rtObj.Organization != request.GetOrganizationId() {
+		dms.Logger.Error().Msg("organization mismatch for refresh token")
+		return nil, dmerrors.DMError(apperr.ErrUnAuthenticated, nil)
+	}
+
+	// Get user information
+	userObj, err := dms.DMStore.GetUser(ctx, rtObj.UserId, vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while fetching user for refresh token")
+		return nil, dmerrors.DMError(apperr.ErrUser404, err)
+	}
+
+	// Generate new access token
+	validTill := time.Now().Add(utils.DEFAULT_PLATFORM_AT_VALIDITY)
+	tokenId, accessToken, err := generateOrganizationAccessToken(userObj, rtObj.Organization, validTill)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while generating access token from refresh token")
+		return nil, dmerrors.DMError(apperr.ErrInternalError, err)
+	}
+
+	// Increment usage count for refresh token
+	err = dms.DMStore.IncrementRefreshTokenUsage(ctx, refreshTokenHash, vapusPlatformClaim)
+	if err != nil {
+		dms.Logger.Err(err).Msg("error while incrementing refresh token usage count")
+		// Continue execution - don't fail the request for logging issues
+	}
+
+	// Log the new access token (async)
+	newCtx := context.TODO()
+	go dms.DMStore.LogPlatformJwtinfo(newCtx, &models.JwtLog{
+		JwtId:        tokenId,
+		UserId:       userObj.UserId,
+		Organization: rtObj.Organization,
+		Scope:        mpb.AccessTokenScope_ORG_TOKEN.String(),
+	}, vapusPlatformClaim)
+
+	return &pb.AccessTokenFromRefreshResponse{
+		AccessToken:       accessToken,
+		ExpiryTimeSeconds: int64(utils.DEFAULT_PLATFORM_AT_VALIDITY.Seconds()),
+	}, nil
+}
+// End Task 4
