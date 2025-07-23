@@ -137,6 +137,17 @@ func (ds *AIStudioDMStore) UserInviteExists(ctx context.Context, userId string, 
 }
 
 func (ds *AIStudioDMStore) LogPlatformRTinfo(ctx context.Context, obj *models.RefreshTokenLog, ctxClaim map[string]string) error {
+	// Defensive: Prevent inserting empty/null refresh token logs
+	if obj == nil ||
+		obj.JwtId == "" ||
+		obj.TokenHash == "" ||
+		obj.UserId == "" ||
+		obj.Organization == "" ||
+		obj.ValidTill == 0 ||
+		obj.Status == "" {
+		logger.Error().Msgf("Refusing to insert incomplete refresh token log: %+v", obj)
+		return fmt.Errorf("incomplete refresh token log, not inserting")
+	}
 	obj.SetAccountId(ctxClaim[encryption.ClaimAccountKey])
 	_, err := ds.Db.PostgresClient.DB.NewInsert().Model(obj).ModelTableExpr(apppkgs.RefreshTokenLogsTable).Exec(ctx)
 	if err != nil {
@@ -159,14 +170,17 @@ func (ds *AIStudioDMStore) LogPlatformJwtinfo(ctx context.Context, obj *models.J
 }
 
 func (ds *AIStudioDMStore) GetPlatformRTinfo(ctx context.Context, token string, ctxClaim map[string]string) (*models.RefreshTokenLog, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE token_hash = '%s'", apppkgs.RefreshTokenLogsTable, token)
-	var user *models.RefreshTokenLog
-	err := ds.Db.PostgresClient.SelectInApp(ctx, &query, user)
+	var refreshToken models.RefreshTokenLog
+	err := ds.Db.PostgresClient.DB.NewSelect().
+		Model(&refreshToken).
+		ModelTableExpr(apppkgs.RefreshTokenLogsTable).
+		Where("token_hash = ?", token).
+		Scan(ctx)
 	if err != nil {
-		logger.Info().Msg("error while getting refresh token log from datastore")
+		logger.Err(err).Ctx(ctx).Msg("error while getting refresh token log from datastore")
 		return nil, err
 	}
-	return user, nil
+	return &refreshToken, nil
 }
 
 func (ds *AIStudioDMStore) PatchUser(ctx context.Context, userId string, data, conditions map[string]interface{}, ctxClaim map[string]string) error {
@@ -252,7 +266,7 @@ func (ds *AIStudioDMStore) GetUser(ctx context.Context, userId string, ctxClaim 
 	return result[0], err
 }
 
-// Task 1A: Added method to increment AccessTokenCreatedCount for refresh token usage tracking
+// Added method to increment AccessTokenCreatedCount for refresh token usage tracking
 func (ds *AIStudioDMStore) IncrementRefreshTokenUsage(ctx context.Context, tokenHash string, ctxClaim map[string]string) error {
 	_, err := ds.Db.PostgresClient.DB.NewUpdate().
 		Model((*models.RefreshTokenLog)(nil)).
@@ -268,4 +282,3 @@ func (ds *AIStudioDMStore) IncrementRefreshTokenUsage(ctx context.Context, token
 	}
 	return nil
 }
-// End Task 1A

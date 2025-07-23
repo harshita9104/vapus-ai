@@ -122,7 +122,7 @@ func (dmc *VapusDataUsers) AuthzManager(ctx context.Context, request *pb.AuthzMa
 	}
 	response := agent.GetResult()
 	agent.LogAgent()
-	response.DmResp = pbtools.HandleDMResponse(ctx, "auth manager action executed successfully", "200")
+	response.DmResp = pbtools.HandleDMResponse(ctx, "authentication manager action executed successfully", "200")
 	return response, nil
 }
 
