@@ -200,12 +200,12 @@ func (dmc *VapusDataUsers) LoginCallback(ctx context.Context, request *pb.LoginC
 	}, nil
 }
 
-// Task 3: Added controller methods for new refresh token endpoints
+// Added controller methods for new refresh token endpoints
 func (dmc *VapusDataUsers) GenerateRefreshToken(ctx context.Context, request *pb.RefreshTokenGenerationRequest) (*pb.RefreshTokenGenerationResponse, error) {
 	dmc.logger.Info().Msg("Generating refresh token with custom expiry...")
 	response, err := dmc.DMServices.GenerateRefreshTokenHandler(ctx, request)
 	if err != nil {
-		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal) //nolint:wrapcheck
+		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal)
 	}
 	response.DmResp = pbtools.HandleDMResponse(ctx, "Refresh token generated successfully", "201")
 	return response, nil
@@ -215,9 +215,8 @@ func (dmc *VapusDataUsers) GenerateAccessTokenFromRefresh(ctx context.Context, r
 	dmc.logger.Info().Msg("Generating access token from refresh token...")
 	response, err := dmc.DMServices.GenerateAccessTokenFromRefreshHandler(ctx, request)
 	if err != nil {
-		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal) //nolint:wrapcheck
+		return nil, pbtools.HandleGrpcError(err, grpccodes.Internal)
 	}
 	response.DmResp = pbtools.HandleDMResponse(ctx, "Access token generated successfully", "200")
 	return response, nil
 }
-// End Task 3

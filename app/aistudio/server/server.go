@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog"
 	pb "github.com/vapusdata-ecosystem/apis/protos/vapusai-studio/v1alpha1"
@@ -51,6 +52,10 @@ func initServer(grpcServer *pbtools.GRPCServer) {
 
 	// Setup auth matcher.
 	allButTheez := func(ctx context.Context, callMeta interceptors.CallMeta) bool {
+		if callMeta.Service == pb.UserManagementService_ServiceDesc.ServiceName && strings.Contains(pb.UserManagementService_GenerateAccessTokenFromRefresh_FullMethodName, callMeta.Method) {
+			return false
+		}
+
 		return healthpb.Health_ServiceDesc.ServiceName != callMeta.Service
 	}
 

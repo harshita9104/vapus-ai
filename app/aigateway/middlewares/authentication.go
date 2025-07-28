@@ -21,13 +21,16 @@ const (
 	PublicInfo    NoAuthnRequired = "/api/v1alpha1/public-info"
 	Services      NoAuthnRequired = "/api/v1alpha1/services"
 	Register      NoAuthnRequired = "/api/v1alpha1/register"
+	//Skip auth for refresh token to access token endpoint
+	RefreshToAccessToken NoAuthnRequired = "/api/v1alpha1/auth/access-token/from-refresh"
 )
 
 func (x NoAuthnRequired) String() string {
 	return string(x)
 }
 func Authentication(c *fiber.Ctx) error {
-	if c.Path() == "/metrics" || c.Path() == LoginHandler.String() || c.Path() == LoginCallback.String() || c.Path() == PublicInfo.String() || c.Path() == Services.String() || c.Path() == Register.String() {
+	if c.Path() == "/metrics" || c.Path() == LoginHandler.String() || c.Path() == LoginCallback.String() || c.Path() == PublicInfo.String() || c.Path() == Services.String() || c.Path() == Register.String() || c.Path() == RefreshToAccessToken.String() {
+		pkgs.DmLogger.Info().Msgf("Skipping auth for path: %s", c.Path())
 		return c.Next()
 	}
 

@@ -209,12 +209,16 @@ func (dms *AIStudioServices) GeneratePlatformAccessToken(ctx context.Context, id
 	return token, mpb.AccessTokenScope_ORG_TOKEN, nil
 }
 
-// Task 4: Added service methods for new refresh token endpoints
+// Added service methods for new refresh token endpoints
 func (dms *AIStudioServices) GenerateRefreshTokenHandler(ctx context.Context, request *pb.RefreshTokenGenerationRequest) (*pb.RefreshTokenGenerationResponse, error) {
-	// Get context claim for authentication
+
 	vapusPlatformClaim, ok := encryption.GetCtxClaim(ctx)
 	if !ok {
-		dms.Logger.Error().Ctx(ctx).Msg("error while getting claim metadata from context")
+		//Create minimal claim context for refresh token validation
+		vapusPlatformClaim = map[string]string{
+			encryption.ClaimAccountKey: dmstores.DMStoreManager.Account.VapusID,
+		}
+		dms.Logger.Info().Ctx(ctx).Msg("Using minimal context claim for refresh token validation") //
 		return nil, encryption.ErrInvalidJWTClaims
 	}
 
@@ -277,13 +281,8 @@ func (dms *AIStudioServices) GenerateRefreshTokenHandler(ctx context.Context, re
 }
 
 func (dms *AIStudioServices) GenerateAccessTokenFromRefreshHandler(ctx context.Context, request *pb.AccessTokenFromRefreshRequest) (*pb.AccessTokenFromRefreshResponse, error) {
-	// Get context claim for authentication
-	vapusPlatformClaim, ok := encryption.GetCtxClaim(ctx)
-	if !ok {
-		dms.Logger.Error().Ctx(ctx).Msg("error while getting claim metadata from context")
-		return nil, encryption.ErrInvalidJWTClaims
-	}
 
+	vapusPlatformClaim := make(map[string]string)
 	// Hash the provided refresh token to match stored hash
 	refreshTokenHash := encryption.GenerateSHA3_256(request.GetRefreshToken(), "")
 
@@ -311,6 +310,10 @@ func (dms *AIStudioServices) GenerateAccessTokenFromRefreshHandler(ctx context.C
 		dms.Logger.Error().Msg("organization mismatch for refresh token")
 		return nil, dmerrors.DMError(apperr.ErrUnAuthenticated, nil)
 	}
+
+	//new - Update context claim with user info from refresh token for database operations
+	vapusPlatformClaim[encryption.ClaimUserIdKey] = rtObj.UserId
+	vapusPlatformClaim[encryption.ClaimOrganizationKey] = rtObj.Organization
 
 	// Get user information
 	userObj, err := dms.DMStore.GetUser(ctx, rtObj.UserId, vapusPlatformClaim)
@@ -348,4 +351,3 @@ func (dms *AIStudioServices) GenerateAccessTokenFromRefreshHandler(ctx context.C
 		ExpiryTimeSeconds: int64(utils.DEFAULT_PLATFORM_AT_VALIDITY.Seconds()),
 	}, nil
 }
-// End Task 4

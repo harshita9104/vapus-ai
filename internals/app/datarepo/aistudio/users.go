@@ -170,17 +170,14 @@ func (ds *AIStudioDMStore) LogPlatformJwtinfo(ctx context.Context, obj *models.J
 }
 
 func (ds *AIStudioDMStore) GetPlatformRTinfo(ctx context.Context, token string, ctxClaim map[string]string) (*models.RefreshTokenLog, error) {
-	var refreshToken models.RefreshTokenLog
-	err := ds.Db.PostgresClient.DB.NewSelect().
-		Model(&refreshToken).
-		ModelTableExpr(apppkgs.RefreshTokenLogsTable).
-		Where("token_hash = ?", token).
-		Scan(ctx)
+	result := new(models.RefreshTokenLog)
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE token_hash = '%s'`, apppkgs.RefreshTokenLogsTable, token)
+	err := ds.Db.PostgresClient.SelectInApp(ctx, &query, result)
 	if err != nil {
 		logger.Err(err).Ctx(ctx).Msg("error while getting refresh token log from datastore")
-		return nil, err
+		return result, err
 	}
-	return &refreshToken, nil
+	return result, nil
 }
 
 func (ds *AIStudioDMStore) PatchUser(ctx context.Context, userId string, data, conditions map[string]interface{}, ctxClaim map[string]string) error {
