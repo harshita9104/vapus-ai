@@ -28,10 +28,10 @@ release-dev:
 # show help for managing the project in your local environment
 help:
 	@echo ''
-	@echo 'Usage:'
+	@echo "\033[1mUsage:\033[0m"
 	@echo ' make [target]'
 	@echo ''
-	@echo 'Targets:'
+	@echo "\033[1mTargets:\033[0m"
 	@awk '/^[a-zA-Z\-_0-9]+:/ { \
 	helpMessage = match(lastLine, /^# (.*)/); \
 		if (helpMessage) { \
@@ -41,6 +41,9 @@ help:
 		} \
 	} \
 	{ lastLine = $$0 }' $(MAKEFILE_LIST)
+	@echo ''
+	@echo "\033[1mExample:\033[0m"
+	@echo '- make init-dev user=kshitij password=secret db=analytics'
 
 .DEFAULT_GOAL := help
 
@@ -70,3 +73,21 @@ check-poetry-tool:
 		echo "poetry is not installed. Please install poetry (https://python-poetry.org/docs/#installation)"; \
 		exit 1; \
 	fi
+
+.PHONY: init-dev
+# starts a TimescaleDB container with the given credentials and database
+init-dev:
+	@if [ -z "$(user)" ] || [ -z "$(password)" ] || [ -z "$(db)" ]; then \
+		echo "\033[1;31mError:\033[0m Missing required variables."; \
+		echo "\033[1mUsage:\033[0m make init-dev user=<username> password=<password> db=<database>"; \
+		exit 1; \
+	fi
+	@echo "\033[1;32m🚀 Starting TimescaleDB container...\033[0m"
+	sudo docker run -d \
+		--name timescaledb \
+		-p 5432:5432 \
+		-e POSTGRES_USER=$(user) \
+		-e POSTGRES_PASSWORD=$(password) \
+		-e POSTGRES_DB=$(db) \
+		timescale/timescaledb:latest-pg17
+	@echo "\033[1;32m✅ Container started with user '\033[36m$(user)\033[32m' and database '\033[36m$(db)\033[0m'"

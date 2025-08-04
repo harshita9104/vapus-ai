@@ -30,6 +30,12 @@ func WithVapusStoreDBPath(path string) DmStoreOpts {
 	}
 }
 
+func WithVapusAnalyticsStoreDBPath(path string) DmStoreOpts {
+	return func(dm *VapusStore) {
+		dm.AnalyticsDBStorePath = path
+	}
+}
+
 func WithVapusStoreBlobPath(path string) DmStoreOpts {
 	return func(dm *VapusStore) {
 		dm.BlobStorePath = path
@@ -51,21 +57,23 @@ func WithVapusCacheStorePath(path string) DmStoreOpts {
 type VapusStore struct {
 	*SecretStore
 	*BeDataStore
-	BlobStore          *BlobStore
-	Error              error
-	ArtifactStoreCreds *models.DataSourceCredsParams
-	SecretStorePath    string
-	DBStorePath        string
-	BlobStorePath      string
-	ArtifactStorePath  string
-	CacheStorePath     string
+	BlobStore            *BlobStore
+	Error                error
+	ArtifactStoreCreds   *models.DataSourceCredsParams
+	SecretStorePath      string
+	DBStorePath          string
+	AnalyticsDBStorePath string
+	BlobStorePath        string
+	ArtifactStorePath    string
+	CacheStorePath       string
 }
 
 type BeDataStore struct {
-	Db     *databases.DataStoreClient
-	PubSub *databases.DataStoreClient
-	Cacher *databases.DataStoreClient
-	Error  error
+	Db          *databases.DataStoreClient
+	AnalyticsDb *databases.DataStoreClient
+	PubSub      *databases.DataStoreClient
+	Cacher      *databases.DataStoreClient
+	Error       error
 }
 
 func NewVapusStore(ctx context.Context, logger zerolog.Logger, opts ...DmStoreOpts) (*VapusStore, error) {
@@ -128,6 +136,14 @@ func (x *VapusStore) NewDBStore(ctx context.Context, secretStore *SecretStore, l
 		return nil, err
 	}
 	bds.Cacher = cacheClient
+
+	analyticsDbClient, err := x.initDbStores(ctx, x.AnalyticsDBStorePath, secretStore, logger)
+	if err != nil {
+		logger.Err(err).Msg("error while initializing analytics db data store")
+		return nil, err
+	}
+	bds.AnalyticsDb = analyticsDbClient
+
 	return bds, nil
 }
 
