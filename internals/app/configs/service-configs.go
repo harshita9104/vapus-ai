@@ -29,19 +29,20 @@ type LocalFSPaths struct {
 }
 
 type VapusAISvcConfig struct {
-	Path                 string
-	VapusBESecretStorage *SecretMap           `yaml:"vapusBESecretStorage"`
-	VapusBEDbStorage     *SecretMap           `yaml:"vapusBEDbStorage"`
-	VapusBECacheStorage  *SecretMap           `yaml:"vapusBECacheStorage"`
-	VapusFileStorage     *SecretMap           `yaml:"vapusFileStorage"`
-	NetworkConfigFile    string               `yaml:"networkConfigFile"`
-	JWTAuthnSecrets      *SecretMap           `yaml:"JWTAuthnSecrets"`
-	AuthnSecrets         *SecretMap           `yaml:"authnSecrets"`
-	ArtifactStore        *SecretMap           `yaml:"artifactStore"`
-	ServerCerts          *TlsCertConfig       `yaml:"serverCerts"`
-	TrinoSpecs           *TrinoDeploymentSpec `yaml:"trinoSpecs"`
-	BaseOs               []*BaseOs            `yaml:"baseOs"`
-	PlatformBaseAccount  *PlatformBootConfig  `yaml:"platformBaseAccount"`
+	Path                    string
+	VapusBESecretStorage    *SecretMap           `yaml:"vapusBESecretStorage"`
+	VapusBEDbStorage        *SecretMap           `yaml:"vapusBEDbStorage"`
+	VapusAnalyticsDbStorage *SecretMap           `yaml:"vapusAnalyticsDbStorage"`
+	VapusBECacheStorage     *SecretMap           `yaml:"vapusBECacheStorage"`
+	VapusFileStorage        *SecretMap           `yaml:"vapusFileStorage"`
+	NetworkConfigFile       string               `yaml:"networkConfigFile"`
+	JWTAuthnSecrets         *SecretMap           `yaml:"JWTAuthnSecrets"`
+	AuthnSecrets            *SecretMap           `yaml:"authnSecrets"`
+	ArtifactStore           *SecretMap           `yaml:"artifactStore"`
+	ServerCerts             *TlsCertConfig       `yaml:"serverCerts"`
+	TrinoSpecs              *TrinoDeploymentSpec `yaml:"trinoSpecs"`
+	BaseOs                  []*BaseOs            `yaml:"baseOs"`
+	PlatformBaseAccount     *PlatformBootConfig  `yaml:"platformBaseAccount"`
 }
 
 func (sc *VapusAISvcConfig) GetFileStorePath() string {
@@ -54,6 +55,10 @@ func (sc *VapusAISvcConfig) GetSecretStoragePath() string {
 
 func (sc *VapusAISvcConfig) GetDBStoragePath() string {
 	return sc.VapusBEDbStorage.Secret
+}
+
+func (sc *VapusAISvcConfig) GetAnalyticsDBStoragePath() string {
+	return sc.VapusAnalyticsDbStorage.Secret
 }
 
 func (sc *VapusAISvcConfig) GetCachStoragePath() string {

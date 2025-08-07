@@ -24,6 +24,7 @@ func newDMStore(conf *appconfigs.VapusAISvcConfig, logger zerolog.Logger) *AIStu
 		logger,
 		apppkgs.WithVapusStoreSecretPath(conf.GetSecretStoragePath()),
 		apppkgs.WithVapusStoreDBPath(conf.GetDBStoragePath()),
+		apppkgs.WithVapusAnalyticsStoreDBPath(conf.GetAnalyticsDBStoragePath()),
 		apppkgs.WithVapusStoreBlobPath(conf.GetFileStorePath()),
 		apppkgs.WithVapusCacheStorePath(conf.GetCachStoragePath()),
 	)

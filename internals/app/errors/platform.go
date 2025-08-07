@@ -266,4 +266,6 @@ var (
 	ErrBedrockGuardrail                    = errors.New("error while creating the bedrock client, invalid bedrock credential")
 	ErrPangeaGuardrail                     = errors.New("error while creating the pangea client, invalid pangea credential")
 	ErrMistralGuardrail                    = errors.New("error while creating the mistral client, invalid mistral credential")
+	ErrDataLogInvalidType                  = errors.New("invalid data log type")
+	ErrDataLogCreate400                    = errors.New("data log entry failed")
 )

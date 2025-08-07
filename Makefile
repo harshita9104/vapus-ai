@@ -28,10 +28,10 @@ release-dev:
 # show help for managing the project in your local environment
 help:
 	@echo ''
-	@echo 'Usage:'
+	@echo "\033[1mUsage:\033[0m"
 	@echo ' make [target]'
 	@echo ''
-	@echo 'Targets:'
+	@echo "\033[1mTargets:\033[0m"
 	@awk '/^[a-zA-Z\-_0-9]+:/ { \
 	helpMessage = match(lastLine, /^# (.*)/); \
 		if (helpMessage) { \

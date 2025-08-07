@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package models.v1alpha1;
+
+option go_package = "github.com/vapusdata-ecosystem/apis/protos/models/v1alpha1";
+
+message APIAccessLog {
+    int64 requested_at = 1; // @gotags: yaml:"requestedAt"
+    string endpoint = 2; // @gotags: yaml:"endpoint"
+    bool error = 3; // @gotags: yaml:"error"
+    string error_message = 4; // @gotags: yaml:"errorMessage"
+    string remote_ip = 5; // @gotags: yaml:"remoteIP"
+    string user_agent = 6; // @gotags: yaml:"userAgent"
+    int64 status_code = 7; // @gotags: yaml:"statusCode"
+    int64 total_latency = 8; // @gotags: yaml:"totalLatency"
+}
+
+message CacheLog {
+    int64 requested_at = 1; // @gotags: yaml:"requestedAt"
+    string endpoint = 2; // @gotags: yaml:"endpoint"
+    CacheOperationType operation = 3; // @gotags: yaml:"operation"
+    CacheStatusType status = 4; // @gotags: yaml:"status"
+    string key = 5; // @gotags: yaml:"key"
+    int64 total_latency = 6; // @gotags: yaml:"totalLatency"
+}
+
+message DataLogs {
+    APIAccessLog api_access_logs = 1; // @gotags: yaml:"apiAccessLogs"
+    CacheLog cache_logs = 2; // @gotags: yaml:"cacheLogs"
+}
+
+enum CacheOperationType {
+    CACHE_GET = 0;
+    CACHE_SET = 1;
+    CACHE_DEL = 2;
+}
+
+enum CacheStatusType {
+    CACHE_HIT = 0;
+    CACHE_MISS = 1;
+}
+
+enum DataLogType {
+    DATA_LOG_API_ACCESS = 0;
+    DATA_LOG_CACHE = 1;
+}
