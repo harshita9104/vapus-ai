@@ -44,4 +44,5 @@ const (
 	VAPUSAIAGENT                 AgentType = "vapusAIAgent"
 	NABHIKAGENT                  AgentType = "nabhikAgent"
 	SECRETMANAGERAGENT           AgentType = "secretManagerAgent"
+	DATALOGAGENT                 AgentType = "dataLogAgent"
 )

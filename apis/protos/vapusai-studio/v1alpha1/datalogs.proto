@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "protos/models/v1alpha1/datalogs.proto";
+import "protos/models/v1alpha1/common.proto";
+
+package aistudio.v1alpha1;
+
+option go_package = "github.com/vapusdata-ecosystem/apis/protos/aistudio/v1alpha1";
+
+/**
+ * DataLogs is the service interface to manage data logs.
+ */
+service DataLogs {
+    /** 
+     * Saves data log.
+     * @param {DataLogsManagerRequest} request - The request object.
+     * @returns {models.v1alpha1.VapusCreateResponse} The response object.
+     */
+    rpc Create(DataLogsManagerRequest) returns (models.v1alpha1.VapusCreateResponse) {}
+
+    rpc GetById(GetByIdDataLogRequest) returns (GetByIdDataLogResponse) {
+        option (google.api.http) = {
+            post: "/api/v1alpha1/logs/{log_type}/{id}"
+            body: "*"
+        };
+    }
+
+    rpc GetAll(GetAllDataLogRequest) returns (GetAllDataLogResponse) {}
+}
+
+message DataLogsManagerRequest {
+    models.v1alpha1.DataLogs spec = 1; // @gotags: yaml:"spec"
+    models.v1alpha1.DataLogType log_type = 2; // @gotags: yaml:"logType"
+}
+
+message GetByIdDataLogRequest {
+    string id = 1; // @gotags: yaml:"id"
+    models.v1alpha1.DataLogType log_type = 2; // @gotags: yaml:"logType"
+}
+
+message GetByIdDataLogResponse {}
+
+message GetAllDataLogRequest {}
+
+message GetAllDataLogResponse {}

@@ -34,6 +34,8 @@ const (
 	VapusAgentLogTable                   = "vapus_agents_logs"
 	AIModelPriceListTable                = "ai_model_price_list"
 	FileStoreLogTable                    = "file_store_logs"
+	APIAccessLogTable                    = "api_access_logs"
+	CacheLogTable                        = "cache_logs"
 )
 
 var DBTablesMap = map[string]any{
@@ -62,4 +64,6 @@ var DBTablesMap = map[string]any{
 	VapusAgentLogTable:    &models.VapusAgentLog{},
 	AIModelPriceListTable: &models.AIModelPriceList{},
 	FileStoreLogTable:     &models.FileStoreLog{},
+	APIAccessLogTable:     &models.APIAccessLogs{},
+	CacheLogTable:         &models.CacheLogs{},
 }

@@ -88,6 +88,7 @@ func initServer(grpcServer *pbtools.GRPCServer) {
 	pb.RegisterAIModelsServer(grpcServer.GrpcServ, dmcontrollers.NewAIModels())
 	pb.RegisterAIPromptsServer(grpcServer.GrpcServ, dmcontrollers.NewAIPrompts())
 	pb.RegisterAIStudioServer(grpcServer.GrpcServ, dmcontrollers.NewAIStudio())
+	pb.RegisterDataLogsServer(grpcServer.GrpcServ, dmcontrollers.NewVapusDataLogs())
 	pb.RegisterDatasourceServiceServer(grpcServer.GrpcServ, dmcontrollers.NewDataSourcesController())
 	pb.RegisterGuardrailPluginsServer(grpcServer.GrpcServ, dmcontrollers.NewVapusGuardrailPlugins())
 	pb.RegisterObservabilityServiceServer(grpcServer.GrpcServ, dmcontrollers.NewObservabilityController())
