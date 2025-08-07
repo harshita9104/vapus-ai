@@ -17,7 +17,7 @@ func (ds *AIStudioDMStore) CreateAPIAccessLog(ctx context.Context, obj *models.A
 	return nil
 }
 
-func (ds *AIStudioDMStore) CreateCacheLog(ctx context.Context, obj *models.APIAccessLogs) error {
+func (ds *AIStudioDMStore) CreateCacheLog(ctx context.Context, obj *models.CacheLogs) error {
 	_, err := ds.Db.PostgresClient.DB.NewInsert().Model(obj).ModelTableExpr(apppkgs.CacheLogTable).Exec(ctx)
 	if err != nil {
 		ds.logger.Err(err).Ctx(ctx).Msg("error while saving cache log to datastore")

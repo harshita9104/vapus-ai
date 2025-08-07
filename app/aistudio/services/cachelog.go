@@ -26,7 +26,7 @@ func NewCacheLog(managerRequest *pb.DataLogsManagerRequest, dmStore *aidmstore.A
 }
 
 func (l *CacheLog) Create(ctx context.Context) error {
-	obj := (&models.APIAccessLogs{}).ConvertFromPb(l.managerRequest.GetSpec().ApiAccessLogs)
+	obj := (&models.CacheLogs{}).ConvertFromPb(l.managerRequest.GetSpec().CacheLogs)
 
 	err := l.dmStore.CreateCacheLog(ctx, obj)
 	if err != nil {

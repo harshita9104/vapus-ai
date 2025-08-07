@@ -40,7 +40,7 @@ func (l *CacheLogs) ConvertToPb() *mpb.CacheLog {
 		RequestedAt:  l.RequestedAt,
 		Endpoint:     l.Endpoint,
 		Operation:    mpb.CacheOperationType(mpb.CacheOperationType_value[l.Operation]),
-		Status:       mpb.CacheStatusType(mpb.CacheOperationType_value[l.Status]),
+		Status:       mpb.CacheStatusType(mpb.CacheStatusType_value[l.Status]),
 		Key:          l.Key,
 		TotalLatency: l.TotalLatency,
 	}

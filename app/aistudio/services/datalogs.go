@@ -77,7 +77,7 @@ func (d *DataLogsAgent) Create(ctx context.Context) error {
 
 	err = service.Create(ctx)
 	if err != nil {
-		d.Logger.Error().Msg("invalid data log type")
+		d.Logger.Error().Msg("failed to create data log entry")
 		return err
 	}
 	return nil
