@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Header from "@/app/components/platform/header";
 import CreateNewButton from "@/app/components/add-new-button";
 import { secretStoreApi } from "@/app/utils/settings-endpoint/secret-store-api";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 // DataTable component with dynamic import
 const DataTable = dynamic(() => import("@/app/components/table"), {
@@ -25,6 +27,7 @@ const SecretStoreClient = () => {
       return data.output || [];
     } catch (error) {
       console.error("Error fetching model nodes data:", error);
+      toast.error("Failed to load secret store data. Please refresh the page.");
       setError(error.message || "Failed to fetch plugins data");
       return [];
     }
@@ -107,6 +110,7 @@ const SecretStoreClient = () => {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto h-screen w-full">
         <Header
           sectionHeader="Secret Service"

@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Header from "@/app/components/platform/header";
 import { userApi } from "@/app/utils/settings-endpoint/user-api";
 import { getGlobalData } from "@/context/GlobalContext";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 // DataTable component with dynamic import
 const DataTable = dynamic(() => import("@/app/components/table"), {
@@ -62,7 +64,7 @@ const UsersTable = () => {
 
       return data.output?.users || [];
     } catch (error) {
-      console.error("Error fetching model nodes data:", error);
+      toast.error("Failed to load users. Please refresh the page.");
       return [];
     }
   };
@@ -124,6 +126,7 @@ const UsersTable = () => {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto h-screen w-full">
         <Header
           sectionHeader="Organization Users"

@@ -178,14 +178,17 @@ const Header = ({
             console.log("User Roles:", userRolesData);
           } else {
             console.error("No users found in API response");
+            toast.error("User profile not found. Please log in again.");
             setError("No users found in API response");
           }
         } else {
           console.error("User ID not found in global context");
+          toast.error("Session expired. Please log in again.");
           setError("User ID not found in global context");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        toast.error("Failed to load user profile. Please try again.");
         if (isMounted) {
           setError(error.message || "Failed to fetch user data");
         }

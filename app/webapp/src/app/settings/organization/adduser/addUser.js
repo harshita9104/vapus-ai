@@ -59,7 +59,7 @@ export default function AddUserModal({ isOpen, onClose, organizationId }) {
         console.log("Processed role options:", roleOptions);
       } catch (error) {
         console.error("Failed to fetch User Roles data:", error);
-        toast.error("Failed to fetch configuration data");
+        toast.error("Failed to load user role options. Please try again.");
       } finally {
         setLoadingRoles(false);
       }
@@ -147,7 +147,7 @@ export default function AddUserModal({ isOpen, onClose, organizationId }) {
       // User can manually close the modal after seeing the success message
     } catch (error) {
       console.error("Error adding users:", error);
-      toast.error("Failed to add users");
+      toast.error("Failed to add users. Please try again.");
     } finally {
       setIsLoading(false);
     }

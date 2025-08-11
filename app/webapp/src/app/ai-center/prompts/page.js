@@ -6,6 +6,8 @@ import CreateNewButton from "@/app/components/add-new-button";
 import Card from "@/app/components/card";
 import { PromptsApi } from "@/app/utils/ai-studio-endpoint/prompts-api";
 import LoadingOverlay from "@/app/components/loading/loading";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 export default function AIPromptsPage({ backListingLink = "./" }) {
   const [aiPrompts, setAiPrompts] = useState([]);
@@ -20,6 +22,7 @@ export default function AIPromptsPage({ backListingLink = "./" }) {
         setAiPrompts(prompts);
       } catch (error) {
         console.error("Error fetching prompts:", error);
+        toast.error("Failed to load prompts. Please refresh the page.");
         setError(error.message);
       } finally {
         setLoading(false);
@@ -53,6 +56,7 @@ export default function AIPromptsPage({ backListingLink = "./" }) {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto scrollbar h-screen w-full">
         <Header
           sectionHeader="AI Model Prompts"

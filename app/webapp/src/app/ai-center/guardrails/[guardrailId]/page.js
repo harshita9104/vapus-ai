@@ -8,6 +8,8 @@ import {
 } from "@/app/utils/ai-studio-endpoint/guardrails-api";
 import { strTitle } from "@/app/components/JS/common";
 import LoadingOverlay from "@/app/components/loading/loading";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 export default function GuardrailDetailsPage({ params }) {
   const resolvedParams = use(params);
@@ -25,6 +27,7 @@ export default function GuardrailDetailsPage({ params }) {
 
         if (!response.output) {
           console.error("Data does not contain output property:", response);
+          toast.error("Invalid data received. Please refresh the page.");
           setError("Unexpected data format received from server");
           setLoading(false);
           return;
@@ -44,6 +47,7 @@ export default function GuardrailDetailsPage({ params }) {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching guardrail details:", err);
+        toast.error("Failed to load guardrail details. Please refresh the page.");
         setError(err.message);
         setLoading(false);
       }
@@ -572,6 +576,7 @@ export default function GuardrailDetailsPage({ params }) {
           </div>
         </div>
       </div>
+      <ToastContainerMessage />
     </div>
   );
 }

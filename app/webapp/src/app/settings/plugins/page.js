@@ -5,6 +5,8 @@ import dynamic from "next/dynamic";
 import Header from "@/app/components/platform/header";
 import { pluginsApi } from "@/app/utils/settings-endpoint/plugins-api";
 import CreateNewButton from "@/app/components/add-new-button";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 const DataTable = dynamic(() => import("@/app/components/table"), {
   ssr: false,
@@ -23,6 +25,7 @@ const PluginSettingsClient = () => {
       return data.output || [];
     } catch (error) {
       console.error("Error fetching model nodes data:", error);
+      toast.error("Failed to load plugins. Please refresh the page.");
       setError(error.message || "Failed to fetch plugins data");
       return [];
     }
@@ -90,6 +93,7 @@ const PluginSettingsClient = () => {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto scrollbar h-screen w-full">
         <Header
           sectionHeader="Plugins"
@@ -125,6 +129,7 @@ const PluginSettingsClient = () => {
       <div hidden id="createTemplate">
         {createTemplate}
       </div>
+      <ToastContainerMessage />
     </div>
   );
 };

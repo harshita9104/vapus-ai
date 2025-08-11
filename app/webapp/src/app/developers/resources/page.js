@@ -1,6 +1,8 @@
 // ResourcePlatform.jsx
 "use client";
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 export default function ResourcePlatform() {
   const [resources, setResources] = useState([]);
@@ -23,9 +25,11 @@ export default function ResourcePlatform() {
         } else {
           setResources([]);
           console.error("Invalid data format in resources.json");
+          toast.error("Invalid configuration file. Please contact support.");
         }
       } catch (error) {
         console.error("Error fetching resources:", error);
+        toast.error("Failed to load resources. Please refresh the page.");
         setResources([]);
       } finally {
         setLoading(false);
@@ -67,6 +71,7 @@ export default function ResourcePlatform() {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto scrollbar h-screen w-full">
         {/* Header would be imported separately */}
         <header className="bg-zinc-900 p-4 text-white">
@@ -168,6 +173,7 @@ export default function ResourcePlatform() {
           </div>
         </div>
       </div>
+      <ToastContainerMessage />
     </div>
   );
 }

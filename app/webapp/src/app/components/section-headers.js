@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import ActionDropdown from "./action-dropdown";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "./notification/customToast";
 
 const SectionHeaders = ({
   resourceId,
@@ -181,6 +183,7 @@ const SectionHeaders = ({
         setLoading(false);
       } catch (error) {
         console.error(`Error fetching ${resourceType}:`, error);
+        toast.error(`Failed to load ${resourceType}. Please refresh the page.`);
         setError(error.message);
         setLoading(false);
       }

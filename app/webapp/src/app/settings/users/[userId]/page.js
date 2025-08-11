@@ -5,6 +5,8 @@ import { userApi } from "@/app/utils/settings-endpoint/user-api";
 import ActionDropdown from "@/app/components/action-dropdown";
 import { strTitle } from "@/app/components/JS/common";
 import LoadingOverlay from "@/app/components/loading/loading";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 const UserDetails = ({ params }) => {
   console.log("my params", params);
@@ -27,6 +29,7 @@ const UserDetails = ({ params }) => {
 
         if (!response) {
           console.error("No response received from server");
+          toast.error("Server not responding. Please try again.");
           setError("No response received from server");
           setLoading(false);
           return;
@@ -54,12 +57,14 @@ const UserDetails = ({ params }) => {
             "Data does not contain expected output format:",
             response
           );
+          toast.error("Invalid data received. Please refresh the page.");
           setError("Unexpected data format received from server");
         }
 
         setLoading(false);
       } catch (err) {
         console.error("Error fetching user data:", err);
+        toast.error("Failed to load user details. Please refresh the page.");
         setError(err.message);
         setLoading(false);
       }
@@ -92,6 +97,7 @@ const UserDetails = ({ params }) => {
 
   return (
     <div className="bg-zinc-800 flex h-screen relative">
+      <ToastContainerMessage />
        <LoadingOverlay 
               isLoading={loading} 
               text="Loading User Details"

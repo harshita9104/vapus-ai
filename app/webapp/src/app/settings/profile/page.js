@@ -6,6 +6,8 @@ import { userProfileApi } from "../../utils/settings-endpoint/profile-api";
 import { DownloadFileApi } from "@/app/utils/file-endpoint/file";
 import ActionDropdown from "../../components/action-dropdown";
 import LoadingOverlay from "@/app/components/loading/loading";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 const UserDetails = () => {
   const [userData, setUserData] = useState(null);
@@ -42,6 +44,7 @@ const UserDetails = () => {
       return null;
     } catch (error) {
       console.error("Error downloading avatar:", error);
+      toast.error("Failed to load profile image.");
       return null;
     }
   };
@@ -93,9 +96,11 @@ const UserDetails = () => {
           }
         } else {
           console.error("User ID not found in global context");
+          toast.error("Session expired. Please log in again.");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        toast.error("Failed to load user profile. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -133,6 +138,7 @@ const UserDetails = () => {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
       <div className="overflow-y-auto scrollbar h-screen w-full">
         <Header
           sectionHeader="Your profile"

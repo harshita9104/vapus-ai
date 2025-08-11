@@ -8,6 +8,8 @@ import {
   pluginsArchiveApi,
 } from "@/app/utils/settings-endpoint/plugins-api";
 import SectionHeaders from "@/app/components/section-headers";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 import LoadingOverlay from "@/app/components/loading/loading";
 
 export default function PluginDetailsPage({ params }) {
@@ -27,6 +29,7 @@ export default function PluginDetailsPage({ params }) {
     const fetchPluginDetails = async () => {
       if (!pluginId) {
         console.error("No plugin ID available");
+        toast.error("Plugin not found. Please try again.");
         setError("No plugin ID provided");
         setLoading(false);
         return;

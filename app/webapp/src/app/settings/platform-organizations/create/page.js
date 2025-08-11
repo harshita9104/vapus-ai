@@ -58,7 +58,7 @@ export default function CreatePlatformDomain() {
       router.push("./");
     } catch (error) {
       console.error("Error creating platform:", error);
-      toast.error(error.message || "Failed to create platform");
+      toast.error("Failed to create platform. Please try again.");
     } finally {
       setIsLoading(false);
     }

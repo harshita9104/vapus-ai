@@ -3,6 +3,7 @@ import { jwtDecode } from "jwt-decode";
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import AuthExpiredModal from "@/app/components/notification/authExpiredPopPup";
+import { toast } from "react-toastify";
 
 const AUTH_CONFIG = {
   loginPath: "/login",
@@ -140,6 +141,7 @@ export class AuthService {
         }
       } catch (error) {
         console.error("Error getting login URL:", error);
+        toast.error("Unable to connect to authentication service. Please try again.");
 
         // Redirect with error parameter when login fails
         const errorMsg = error.message || "Login failed. Please try again.";

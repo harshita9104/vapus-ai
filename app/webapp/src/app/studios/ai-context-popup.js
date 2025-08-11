@@ -36,10 +36,11 @@ export default function ContextModal({ isOpen, onClose }) {
             setUserData(userInfo);
           } else {
             console.error("User ID not found in global context");
+            toast.error("Session expired. Please log in again.");
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          toast.error("Failed to load user profile data");
+          toast.error("Failed to load user profile.");
         }
       }
     };
@@ -179,7 +180,7 @@ export default function ContextModal({ isOpen, onClose }) {
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      toast.error(`Failed to upload ${file.name}: ${error.message}`);
+      toast.error(`Failed to upload ${file.name}. Please try again.`);
       
       // Mark as failed
       setUploadedFiles(prev => 

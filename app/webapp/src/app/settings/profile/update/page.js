@@ -73,10 +73,11 @@ export default function UpdateProfile() {
           await populateFormData(userInfo);
         } else {
           console.error("User ID not found in global context");
+          toast.error("Session expired. Please log in again.");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-        toast.error("Failed to load user profile data");
+        toast.error("Failed to load user profile. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -111,6 +112,7 @@ export default function UpdateProfile() {
       return null;
     } catch (error) {
       console.error("Error downloading avatar:", error);
+      toast.error("Failed to load profile image.");
       return null;
     }
   };
@@ -257,7 +259,7 @@ export default function UpdateProfile() {
       }
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      toast.error(error.message || "Failed to upload avatar");
+      toast.error("Failed to upload profile image. Please try again.");
 
       // Reset avatar on error
       setAvatarPreview("");
@@ -369,7 +371,7 @@ export default function UpdateProfile() {
       router.push("./");
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error(error.message || "Failed to update profile");
+      toast.error("Failed to update profile. Please try again.");
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,8 @@ import dynamic from "next/dynamic";
 import Header from "@/app/components/platform/header";
 import CreateNewButton from "@/app/components/add-new-button";
 import { modelsRegistryApi } from "@/app/utils/ai-studio-endpoint/models-registry-api";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "@/app/components/notification/customToast";
 
 //  DataTable component with dynamic import
 const DataTable = dynamic(() => import("@/app/components/table"), {
@@ -22,6 +24,7 @@ const ModelNodesTable = () => {
       return data.output.aiModelNodes || [];
     } catch (error) {
       console.error("Error fetching model nodes data:", error);
+      toast.error("Failed to load model registry. Please refresh the page.");
       return [];
     }
   };
@@ -78,8 +81,8 @@ const ModelNodesTable = () => {
 
   return (
     <div className="bg-zinc-800 flex h-screen">
+      <ToastContainerMessage />
 
-      
       <div className="overflow-y-auto scrollbar h-screen w-full">
         <Header
           sectionHeader="AI Models"
@@ -105,12 +108,10 @@ const ModelNodesTable = () => {
 
         <div className="flex-grow  w-full">
           <section id="tables" className="space-y-6">
-   
-              <CreateNewButton
-                href="./models-registry/create"
-                label="Add New"
-              />
-     
+            <CreateNewButton
+              href="./models-registry/create"
+              label="Add New"
+            />
 
             <div className="p-4">
               <DataTable

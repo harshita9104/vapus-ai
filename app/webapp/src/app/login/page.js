@@ -131,11 +131,11 @@ export default function LoginPage({
 
       if (!result.success) {
         console.error("Login failed:", result.error);
-        toast.error(result.error || "Login failed");
+        toast.error("Login failed. Please try again.");
       }
     } catch (error) {
       console.error("Login error:", error);
-      toast.error(error.message || "Login process failed");
+      toast.error("Unable to connect to login service. Please try again.");
     }
   };
 

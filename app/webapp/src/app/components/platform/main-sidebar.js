@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import { getAuthService } from "../../../../lib/auth";
 import { userGlobalData } from "@/context/GlobalContext";
 import { userProfileApi } from "@/app/utils/settings-endpoint/profile-api";
+import { toast } from "react-toastify";
+import ToastContainerMessage from "../notification/customToast";
 
 const Sidebar = () => {
   // Internal navigation data
@@ -526,9 +528,11 @@ const Sidebar = () => {
           setUserData(data.output.users[0]);
         } else {
           console.error("User ID not found in global context");
+          toast.error("Session expired. Please log in again.");
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
+        toast.error("Failed to load user profile. Please try again.");
       } finally {
         setLoading(false);
       }

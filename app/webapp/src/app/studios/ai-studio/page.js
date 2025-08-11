@@ -134,7 +134,7 @@ export default function AIStudio({ response, globalContext, aiStudioChat }) {
       toast.success('Code copied to clipboard!');
     } catch (err) {
       console.error('Failed to copy:', err);
-      toast.error('Failed to copy code');
+      toast.error('Failed to copy code to clipboard');
     }
   };
 
@@ -500,7 +500,7 @@ const submitInput = async () => {
     
   } catch (error) {
     console.error("Error in submitInput:", error);
-    toast.error(`Failed to process request: ${error.message}`);
+    toast.error("Failed to send message. Please try again.");
     
     // Re-enable input
     if (inputArea) {

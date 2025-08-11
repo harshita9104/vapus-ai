@@ -65,9 +65,7 @@ const ActionDropdownMenu = ({
             console.error(
               "No API service available for this resource type and action"
             );
-            toast.error(
-              "Unable to delete resource. No API service configured."
-            );
+            toast.error("Unable to perform this action. Please contact support.");
           }
         } catch (error) {
           console.error("Error deleting resource:", error);
