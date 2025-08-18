@@ -68,7 +68,8 @@ func NewRootCmd() *cobra.Command {
 		actions.NewDescribeCmd(),
 		NewRequestSpecCmd(),
 		actions.NewActCmd(),
-		NewOperatorCmd())
+		NewOperatorCmd(),
+		NewSynthDataCmd())
 	return rootCmd
 }
 
@@ -83,6 +84,16 @@ func defaultConfigDir() string {
 }
 
 func initConfig() {
+	// Check if this is a command that should skip config initialization
+	args := os.Args
+	if len(args) > 1 {
+		cmdName := args[1]
+		if ignoreConnMap[cmdName] {
+			Logger.Debug().Msgf("Skipping config initialization for command: %s", cmdName)
+			return
+		}
+	}
+
 	Logger.Debug().Msgf("Initiating config... at %v", plclient.MasterCommonFlags.CfgFile)
 	// Read config either from plclient.MasterCommonFlags.CfgFile or from home directory!
 	if plclient.MasterCommonFlags.CfgFile != "" {

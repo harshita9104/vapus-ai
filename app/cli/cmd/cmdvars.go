@@ -26,4 +26,5 @@ var ignoreConnMap = map[string]bool{
 	pkg.ExplainOps:     true,
 	pkg.OperatorOps:    true,
 	pkg.InstallerOps:   true,
+	pkg.SynthDataOps:   true,
 }

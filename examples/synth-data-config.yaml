@@ -1,0 +1,33 @@
+source_db:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: password
+    database: source_database
+    sslmode: disable
+target_db:
+    host: localhost
+    port: 5432
+    username: postgres
+    password: password
+    database: target_database
+    sslmode: disable
+database_suffix: _synthetic_test
+row_count: 1000
+privacy_rules:
+    - tablename: users
+      columnname: email
+      fakertag: email
+      action: fake
+      customvalue: ""
+    - tablename: users
+      columnname: password
+      fakertag: password
+      action: fake
+      customvalue: ""
+    - tablename: customers
+      columnname: credit_card
+      fakertag: credit_card
+      action: fake
+      customvalue: ""
+parallel_tables: 4

@@ -58,6 +58,7 @@ require (
 	github.com/invopop/jsonschema v0.13.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
 	github.com/openai/openai-go v1.0.0
 	github.com/opensearch-project/opensearch-go/v4 v4.3.0
 	github.com/pangeacyber/pangea-go/pangea-sdk/v5 v5.2.0
@@ -277,7 +278,6 @@ require (
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
