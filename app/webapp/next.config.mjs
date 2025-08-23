@@ -26,6 +26,20 @@ const nextConfig = {
     return config;
   },
   reactStrictMode: false,
+  
+  // Add rewrites for documentation
+  async rewrites() {
+    return [
+      {
+        source: '/docs-static',
+        destination: '/docs-build/index.html',
+      },
+      {
+        source: '/docs-static/:path*',
+        destination: '/docs-build/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

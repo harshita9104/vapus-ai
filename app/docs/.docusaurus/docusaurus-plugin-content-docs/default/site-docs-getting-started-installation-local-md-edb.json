@@ -1,0 +1,28 @@
+{
+  "id": "getting-started/installation/local",
+  "title": "Local Setup",
+  "description": "Set up and run VapusAI on your machine by following the instructions below.",
+  "source": "@site/docs/getting-started/installation/local.md",
+  "sourceDirName": "getting-started/installation",
+  "slug": "/getting-started/installation/local",
+  "permalink": "/docs-static/getting-started/installation/local",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/vapusai/vapus-ai/tree/main/app/docs/docs/getting-started/installation/local.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "local",
+    "title": "Local Setup",
+    "sidebar_label": "Local"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Overview",
+    "permalink": "/docs-static/getting-started/overview"
+  },
+  "next": {
+    "title": "production",
+    "permalink": "/docs-static/getting-started/installation/production"
+  }
+}

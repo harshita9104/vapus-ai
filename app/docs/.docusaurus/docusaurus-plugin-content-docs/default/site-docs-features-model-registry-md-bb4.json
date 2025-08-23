@@ -1,0 +1,24 @@
+{
+  "id": "features/model-registry",
+  "title": "Model Registry",
+  "description": "The Model Registry in VapusAI allows you to connect, configure, authenticate, and test AI models from providers like OpenAI, Anthropic, Azure, AWS Bedrock, or even local services — all from a unified control panel.",
+  "source": "@site/docs/features/model-registry.md",
+  "sourceDirName": "features",
+  "slug": "/features/model-registry",
+  "permalink": "/docs-static/features/model-registry",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/vapusai/vapus-ai/tree/main/app/docs/docs/features/model-registry.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {
+    "id": "model-registry",
+    "title": "Model Registry",
+    "sidebar_label": "Model Registry"
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "production",
+    "permalink": "/docs-static/getting-started/installation/production"
+  }
+}

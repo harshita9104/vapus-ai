@@ -1,0 +1,38 @@
+{
+  "/docs-static/-bdb": {
+    "__comp": "c4f5d8e4",
+    "__context": {
+      "plugin": "a7456010"
+    },
+    "config": "5e9f5e1a"
+  },
+  "/docs-static/-7f9": {
+    "__comp": "5e95c892",
+    "__context": {
+      "plugin": "aba21aa0"
+    }
+  },
+  "/docs-static/-c58": {
+    "__comp": "a7bd4aaa",
+    "__props": "174383fc"
+  },
+  "/docs-static/-cda": {
+    "__comp": "a94703ab"
+  },
+  "/docs-static/features/model-registry-42d": {
+    "__comp": "17896441",
+    "content": "bb4d1189"
+  },
+  "/docs-static/getting-started/installation/local-960": {
+    "__comp": "17896441",
+    "content": "edb9da67"
+  },
+  "/docs-static/getting-started/installation/production-df5": {
+    "__comp": "17896441",
+    "content": "11db7db5"
+  },
+  "/docs-static/getting-started/overview-8a1": {
+    "__comp": "17896441",
+    "content": "7a96ca3d"
+  }
+}

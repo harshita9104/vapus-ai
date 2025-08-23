@@ -1,0 +1,23 @@
+{
+  "id": "getting-started/overview",
+  "title": "Overview",
+  "description": "Welcome to VapusAI Documentation!",
+  "source": "@site/docs/getting-started/overview.md",
+  "sourceDirName": "getting-started",
+  "slug": "/getting-started/overview",
+  "permalink": "/docs-static/getting-started/overview",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/vapusai/vapus-ai/tree/main/app/docs/docs/getting-started/overview.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "next": {
+    "title": "Local",
+    "permalink": "/docs-static/getting-started/installation/local"
+  }
+}

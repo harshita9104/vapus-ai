@@ -1,0 +1,24 @@
+{
+  "id": "getting-started/installation/production",
+  "title": "production",
+  "description": "",
+  "source": "@site/docs/getting-started/installation/production.md",
+  "sourceDirName": "getting-started/installation",
+  "slug": "/getting-started/installation/production",
+  "permalink": "/docs-static/getting-started/installation/production",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/vapusai/vapus-ai/tree/main/app/docs/docs/getting-started/installation/production.md",
+  "tags": [],
+  "version": "current",
+  "frontMatter": {},
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Local",
+    "permalink": "/docs-static/getting-started/installation/local"
+  },
+  "next": {
+    "title": "Model Registry",
+    "permalink": "/docs-static/features/model-registry"
+  }
+}
