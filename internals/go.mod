@@ -79,6 +79,7 @@ require (
 	github.com/trinodb/trino-go-client v0.319.0
 	github.com/uptrace/bun v1.2.3
 	github.com/uptrace/bun/dialect/pgdialect v1.2.3
+	github.com/uptrace/bun/driver/pgdriver v1.1.12
 	github.com/uptrace/bun/extra/bundebug v1.2.3
 	github.com/urfave/cli/v2 v2.27.5
 	github.com/vapusdata-ecosystem/apis v0.0.0-00010101000000-000000000000
@@ -400,6 +401,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/kubectl v0.31.1 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
+	mellium.im/sasl v0.3.1 // indirect
 	oras.land/oras-go v1.2.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/kustomize/api v0.17.2 // indirect

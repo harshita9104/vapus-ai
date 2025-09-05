@@ -76,3 +76,12 @@ apis/gen-go/apidocs.swagger.json
 
 
 .next/
+# Python Virtual Environment
+app/aitools/venv/
+
+# Local Binaries and Debug files
+app/aistudio/cmd/__debug_bin*
+app/aistudio/vapus_aistudio
+
+# Docs build output
+app/webapp/public/docs-build/
