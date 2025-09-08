@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -19,6 +22,9 @@ import (
 )
 
 func main() {
+	// Load .env file if it exists
+	loadEnvFile()
+
 	if len(os.Args) < 2 {
 		printHelp()
 		return
@@ -29,36 +35,22 @@ func main() {
 	switch command {
 	case "init":
 		runInit()
-	case "migrate":
-		runMigrate()
-	case "rollback":
-		runRollback()
+	case "create", "creation":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: go run ./simple-main.go creation <migration_name>")
+			return
+		}
+		createGoMigrationFiles(strings.Join(os.Args[2:], "_"))
+	case "run", ":run":
+		runAllMigrations()
+	case "revert", "rollback":
+		revertLastMigration()
 	case "status":
-		runStatus()
-	case "create-sql":
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: vapus-migrate create-sql <migration_name>")
-			return
-		}
-		createSQLMigration(strings.Join(os.Args[2:], "_"))
-	case "create-go":
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: vapus-migrate create-go <migration_name>")
-			return
-		}
-		createGoMigration(strings.Join(os.Args[2:], "_"))
-	case "mark-applied":
-		runMarkApplied()
-	case "unlock":
-		runUnlock()
+		showMigrationStatus()
 	case "verify":
 		runVerify()
-	case "delete-user":
-		if len(os.Args) < 3 {
-			fmt.Println("Usage: vapus-migrate delete-user <email>")
-			return
-		}
-		deleteUser(os.Args[2])
+	case "unlock":
+		runUnlock()
 	case "help", "--help", "-h":
 		printHelp()
 	default:
@@ -68,38 +60,34 @@ func main() {
 }
 
 func printHelp() {
-	fmt.Println(`VapusAI Database Migration Tool
+	fmt.Println(`VapusAI Go-Based Migration Tool
 
 Usage:
-  vapus-migrate <command>
+  go run ./simple-main.go <command>
 
 Commands:
-  init        Initialize migration table
-  migrate     Run pending migrations
-  rollback    Rollback last migration group
-  status      Show migration status
-  mark-applied Mark migrations as applied without running them
-  unlock      Unlock migrations (use if locked)
-  create-sql  Create new SQL migration file
-  create-go   Create new Go migration file
-  verify      Check database changes
-  delete-user Delete a user by email
-  help        Show this help
+  init         Initialize migration table  
+  creation     Create new Go migration files (up & down)
+  :run         Run all pending migrations (top to bottom)
+  revert       Rollback last migration (runs down file)
+  status       Show migration status and sequence
+  verify       Verify database changes
+  unlock       Unlock migrations when stuck
+  help         Show this help
 
 Environment Variables:
-  DB_HOST     Database host (default: localhost)
-  DB_PORT     Database port (default: 5432)
-  DB_USER     Database username (default: postgres)
+  DB_HOST     Database host
+  DB_PORT     Database port  
+  DB_USER     Database username
   DB_PASSWORD Database password (required)
-  DB_NAME     Database name (default: vapusai)
-  DB_SSLMODE  SSL mode (default: disable)
+  DB_NAME     Database name
+  DB_SSLMODE  SSL mode
 
 Examples:
-  vapus-migrate init
-  vapus-migrate migrate
-  vapus-migrate mark-applied
-  vapus-migrate create-sql add_user_column
-  vapus-migrate create-go update_vendor_tables`)
+  go run ./simple-main.go creation add_user_table
+  go run ./simple-main.go :run
+  go run ./simple-main.go revert
+  go run ./simple-main.go status`)
 }
 
 func getDBConnection() (*bun.DB, error) {
@@ -156,8 +144,145 @@ func runInit() {
 	fmt.Println("✅ Migration table initialized successfully!")
 }
 
-func runMigrate() {
-	fmt.Println(" Running pending migrations...")
+// createGoMigrationFiles creates both up and down Go migration files with timestamp
+func createGoMigrationFiles(name string) {
+	fmt.Printf("Creating Go migration files: %s\n", name)
+
+	// Generate timestamp for unique filename
+	timestamp := fmt.Sprintf("%d", time.Now().Unix())
+	fileName := fmt.Sprintf("%s_%s.go", timestamp, name)
+
+	migrationsDir := "/home/harshita/workspace/vapus-ai/internals/app/migration/migrations"
+
+	// Create migrations directory if it doesn't exist
+	if err := os.MkdirAll(migrationsDir, 0755); err != nil {
+		log.Fatalf("❌ Failed to create migrations directory: %v", err)
+	}
+
+	filePath := filepath.Join(migrationsDir, fileName)
+
+	// Generate table name and model name from migration name
+	// Convert add_products_table -> AddProductsTable
+	words := strings.Split(name, "_")
+	var modelNameParts []string
+	for _, word := range words {
+		modelNameParts = append(modelNameParts, capitalizeFirst(word))
+	}
+	modelName := strings.Join(modelNameParts, "") + "Model"
+
+	// Bun creates table names by converting ModelName to snake_case and pluralizing
+	// TestFinalMigrationModel -> test_final_migration_models
+	// So for test_final_migration, model is TestFinalMigrationModel, table is test_final_migration_models
+	tableName := name + "_models"
+
+	// Template for Go migration (both up and down in one file)
+	template := `package migrations
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/uptrace/bun"
+)
+
+func init() {
+	Migrations.MustRegister(func(ctx context.Context, db *bun.DB) error {
+		fmt.Printf(" [UP] Running migration: ` + name + `\n")
+
+		// Check if table exists before creating
+		var exists bool
+		err := db.NewSelect().
+			ColumnExpr("true").
+			TableExpr("information_schema.tables").
+			Where("table_name = ? AND table_schema = 'public'", "` + tableName + `").
+			Scan(ctx, &exists)
+
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			return fmt.Errorf("failed to check table existence: %w", err)
+		}
+
+		if !exists {
+			// Create ` + tableName + ` table
+			_, err = db.NewCreateTable().
+				Model((*` + modelName + `)(nil)).
+				IfNotExists().
+				Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to create table: %w", err)
+			}
+
+			// Insert sample data
+			sampleData := &` + modelName + `{
+				Name:        "Sample ` + name + `",
+				Description: "Created by Go migration",
+				CreatedAt:   time.Now(),
+			}
+			_, err = db.NewInsert().Model(sampleData).Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to insert sample data: %w", err)
+			}
+
+			fmt.Printf("   ✅ Migration completed successfully - created ` + tableName + ` table\n")
+		} else {
+			fmt.Printf("   ⚠️  Table ` + tableName + ` already exists, skipping\n")
+		}
+
+		return nil
+	}, func(ctx context.Context, db *bun.DB) error {
+		fmt.Printf("  [DOWN] Rolling back migration: ` + name + `\n")
+
+		// Check if table exists before dropping
+		var exists bool
+		err := db.NewSelect().
+			ColumnExpr("true").
+			TableExpr("information_schema.tables").
+			Where("table_name = ? AND table_schema = 'public'", "` + tableName + `").
+			Scan(ctx, &exists)
+
+		if err != nil && err.Error() != "sql: no rows in result set" {
+			return fmt.Errorf("failed to check table existence: %w", err)
+		}
+
+		if exists {
+			// Drop the ` + tableName + ` table
+			_, err = db.NewDropTable().
+				Model((*` + modelName + `)(nil)).
+				IfExists().
+				Exec(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to drop table: %w", err)
+			}
+			fmt.Printf("   ✅ Rollback completed successfully - dropped ` + tableName + ` table\n")
+		} else {
+			fmt.Printf("   ⚠️  Table ` + tableName + ` doesn't exist, skipping\n")
+		}
+
+		return nil
+	})
+}
+
+// ` + modelName + ` - Model for ` + name + ` migration
+type ` + modelName + ` struct {
+	ID          int64     ` + "`bun:\"id,pk,autoincrement\"`" + `
+	Name        string    ` + "`bun:\"name,notnull\"`" + `
+	Description string    ` + "`bun:\"description\"`" + `
+	CreatedAt   time.Time ` + "`bun:\"created_at,notnull,default:current_timestamp\"`" + `
+}
+`
+
+	// Write migration file
+	if err := os.WriteFile(filePath, []byte(template), 0644); err != nil {
+		log.Fatalf("❌ Failed to create migration file: %v", err)
+	}
+
+	fmt.Printf("✅ Created migration file: %s\n", filePath)
+	fmt.Println("� Migration is ready to run! Use './simple-main :run' to apply it")
+}
+
+// runAllMigrations runs all pending migrations from top to bottom
+func runAllMigrations() {
+	fmt.Println(" Running all pending migrations (top to bottom)...")
 
 	db, err := getDBConnection()
 	if err != nil {
@@ -167,74 +292,48 @@ func runMigrate() {
 
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
+	// Check if migration table exists, create if not
+	if err := migrator.Init(context.Background()); err != nil {
+		log.Fatalf("❌ Failed to initialize migration table: %v", err)
+	}
+
+	// Lock migrations to prevent concurrent runs
 	if err := migrator.Lock(context.Background()); err != nil {
-		log.Fatal("❌ Failed to lock migrations: ", err)
+		log.Fatalf("❌ Failed to lock migrations: %v", err)
 	}
 	defer migrator.Unlock(context.Background())
 
-	group, err := migrator.Migrate(context.Background())
-	if err != nil {
-		log.Fatal("❌ Failed to run migrations: ", err)
-	}
-
-	if group.IsZero() {
-		fmt.Println("✅ No new migrations to run (database is up to date)")
-	} else {
-		fmt.Printf("✅ Successfully migrated to: %s\n", group)
-	}
-}
-
-func runRollback() {
-	fmt.Println(" Rolling back last migration group...")
-
-	db, err := getDBConnection()
-	if err != nil {
-		log.Fatal("❌ ", err)
-	}
-	defer db.Close()
-
-	migrator := migrate.NewMigrator(db, migrations.Migrations)
-
-	if err := migrator.Lock(context.Background()); err != nil {
-		log.Fatal("❌ Failed to lock migrations: ", err)
-	}
-	defer migrator.Unlock(context.Background())
-
-	group, err := migrator.Rollback(context.Background())
-	if err != nil {
-		log.Fatal("❌ Failed to rollback migrations: ", err)
-	}
-
-	if group.IsZero() {
-		fmt.Println("✅ No migration groups to roll back")
-	} else {
-		fmt.Printf("✅ Successfully rolled back: %s\n", group)
-	}
-}
-
-func runStatus() {
-	fmt.Println("📊 Checking migration status...")
-
-	db, err := getDBConnection()
-	if err != nil {
-		log.Fatal("❌ ", err)
-	}
-	defer db.Close()
-
-	migrator := migrate.NewMigrator(db, migrations.Migrations)
-
+	// Get migration status before running
 	ms, err := migrator.MigrationsWithStatus(context.Background())
 	if err != nil {
-		log.Fatal("❌ Failed to get migration status: ", err)
+		log.Fatalf("❌ Failed to get migration status: %v", err)
 	}
 
-	fmt.Printf("📋 All migrations: %s\n", ms)
-	fmt.Printf("⏳ Unapplied migrations: %s\n", ms.Unapplied())
-	fmt.Printf("✅ Last migration group: %s\n", ms.LastGroup())
+	unapplied := ms.Unapplied()
+	if len(unapplied) == 0 {
+		fmt.Println("✅ No pending migrations to run (database is up to date)")
+		return
+	}
+
+	fmt.Printf(" Found %d pending migration(s)\n", len(unapplied))
+
+	// Run migrations
+	group, err := migrator.Migrate(context.Background())
+	if err != nil {
+		log.Fatalf("❌ Failed to run migrations: %v", err)
+	}
+
+	if !group.IsZero() {
+		fmt.Printf("✅ Successfully applied migrations: %s\n", group)
+
+		// Record in database sequence
+		fmt.Println(" Migration sequence updated in database")
+	}
 }
 
-func runMarkApplied() {
-	fmt.Println("📝 Marking migrations as applied without running them...")
+// revertLastMigration rolls back the last migration group
+func revertLastMigration() {
+	fmt.Println(" Reverting last migration (running down file)...")
 
 	db, err := getDBConnection()
 	if err != nil {
@@ -244,23 +343,151 @@ func runMarkApplied() {
 
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
+	// Lock migrations to prevent concurrent runs
 	if err := migrator.Lock(context.Background()); err != nil {
-		log.Fatal("❌ Failed to lock migrations: ", err)
+		log.Fatalf("❌ Failed to lock migrations: %v", err)
 	}
 	defer migrator.Unlock(context.Background())
 
-	group, err := migrator.Migrate(context.Background(), migrate.WithNopMigration())
+	// Get current status
+	ms, err := migrator.MigrationsWithStatus(context.Background())
 	if err != nil {
-		log.Fatal("❌ Failed to mark migrations as applied: ", err)
+		log.Fatalf("❌ Failed to get migration status: %v", err)
 	}
 
-	if group.IsZero() {
-		fmt.Println("✅ No new migrations to mark as applied")
-	} else {
-		fmt.Printf("✅ Successfully marked as applied: %s\n", group)
+	lastGroup := ms.LastGroup()
+	if lastGroup.IsZero() {
+		fmt.Println("⚠️  No migrations to rollback")
+		return
+	}
+
+	fmt.Printf(" Rolling back last group: %s\n", lastGroup)
+
+	// Run rollback
+	group, err := migrator.Rollback(context.Background())
+	if err != nil {
+		log.Fatalf("❌ Failed to rollback migration: %v", err)
+	}
+
+	if !group.IsZero() {
+		fmt.Printf("✅ Successfully rolled back: %s\n", group)
+		fmt.Println("📊 Migration sequence updated in database")
 	}
 }
 
+// showMigrationStatus shows current migration status and sequence
+func showMigrationStatus() {
+	fmt.Println(" Checking migration status and sequence...")
+
+	db, err := getDBConnection()
+	if err != nil {
+		log.Fatal("❌ ", err)
+	}
+	defer db.Close()
+
+	migrator := migrate.NewMigrator(db, migrations.Migrations)
+
+	// Check if migration table exists
+	tableExists := true
+	if err := migrator.Init(context.Background()); err != nil {
+		tableExists = false
+	}
+
+	if !tableExists {
+		fmt.Println("⚠️  Migration table not initialized. Run 'init' first.")
+		return
+	}
+
+	// Get migration status
+	ms, err := migrator.MigrationsWithStatus(context.Background())
+	if err != nil {
+		log.Fatalf("❌ Failed to get migration status: %v", err)
+	}
+
+	fmt.Printf(" Total migrations: %d\n", len(ms))
+	fmt.Printf(" Applied migrations: %d\n", len(ms.Applied()))
+	fmt.Printf(" Pending migrations: %d\n", len(ms.Unapplied()))
+
+	if !ms.LastGroup().IsZero() {
+		fmt.Printf(" Last migration group: %s\n", ms.LastGroup())
+	}
+
+	// Show migration sequence from database
+	fmt.Println("\n Migration Sequence in Database:")
+
+	var migrations []struct {
+		ID         int64     `bun:"id"`
+		Name       string    `bun:"name"`
+		GroupID    int64     `bun:"group_id"`
+		MigratedAt time.Time `bun:"migrated_at"`
+	}
+
+	err = db.NewSelect().
+		Model(&migrations).
+		Table("bun_migrations").
+		Order("id ASC").
+		Scan(context.Background())
+
+	if err != nil {
+		fmt.Printf("❌ Failed to read migration sequence: %v\n", err)
+		return
+	}
+
+	if len(migrations) == 0 {
+		fmt.Println("    No migrations applied yet")
+	} else {
+		for i, m := range migrations {
+			fmt.Printf("   %d. %s (Group: %d, Applied: %s)\n",
+				i+1, m.Name, m.GroupID, m.MigratedAt.Format("2006-01-02 15:04:05"))
+		}
+	}
+
+	// Show pending migrations
+	unapplied := ms.Unapplied()
+	if len(unapplied) > 0 {
+		fmt.Println("\n Pending Migrations:")
+		for i, m := range unapplied {
+			fmt.Printf("   %d. %s\n", i+1, m.Name)
+		}
+	}
+}
+
+// loadEnvFile loads environment variables from .env file if it exists
+func loadEnvFile() {
+	envFile := ".env"
+	if _, err := os.Stat(envFile); os.IsNotExist(err) {
+		return // .env file doesn't exist, skip
+	}
+
+	file, err := os.Open(envFile)
+	if err != nil {
+		return // Can't open .env file, skip
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue // Skip empty lines and comments
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue // Invalid format
+		}
+
+		key := strings.TrimSpace(parts[0])
+		value := strings.TrimSpace(parts[1])
+
+		// Only set if environment variable is not already set
+		if os.Getenv(key) == "" {
+			os.Setenv(key, value)
+		}
+	}
+}
+
+// runUnlock unlocks migrations when they get stuck
 func runUnlock() {
 	fmt.Println("🔓 Unlocking migrations...")
 
@@ -273,55 +500,15 @@ func runUnlock() {
 	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
 	if err := migrator.Unlock(context.Background()); err != nil {
-		log.Fatal("❌ Failed to unlock migrations: ", err)
+		log.Fatalf("❌ Failed to unlock migrations: %v", err)
 	}
 
 	fmt.Println("✅ Migrations unlocked successfully!")
 }
 
-func createSQLMigration(name string) {
-	fmt.Printf(" Creating SQL migration: %s\n", name)
-
-	db, err := getDBConnection()
-	if err != nil {
-		log.Fatal("❌ ", err)
-	}
-	defer db.Close()
-
-	migrator := migrate.NewMigrator(db, migrations.Migrations)
-
-	files, err := migrator.CreateSQLMigrations(context.Background(), name)
-	if err != nil {
-		log.Fatal("❌ Failed to create SQL migration: ", err)
-	}
-
-	for _, mf := range files {
-		fmt.Printf("✅ Created migration: %s (%s)\n", mf.Name, mf.Path)
-	}
-}
-
-func createGoMigration(name string) {
-	fmt.Printf(" Creating Go migration: %s\n", name)
-
-	db, err := getDBConnection()
-	if err != nil {
-		log.Fatal("❌ ", err)
-	}
-	defer db.Close()
-
-	migrator := migrate.NewMigrator(db, migrations.Migrations)
-
-	mf, err := migrator.CreateGoMigration(context.Background(), name)
-	if err != nil {
-		log.Fatal("❌ Failed to create Go migration: ", err)
-	}
-
-	fmt.Printf("✅ Created migration: %s (%s)\n", mf.Name, mf.Path)
-}
-
+// runVerify checks the database for any changes
 func runVerify() {
-	fmt.Println("🔍 VERIFYING DATABASE CHANGES")
-	fmt.Println("==================================================")
+	fmt.Println(" Verifying database changes...")
 
 	db, err := getDBConnection()
 	if err != nil {
@@ -329,152 +516,34 @@ func runVerify() {
 	}
 	defer db.Close()
 
-	// Check if migration_test_table exists
-	var tableExists bool
-	err = db.NewSelect().
-		ColumnExpr("true").
-		TableExpr("information_schema.tables").
-		Where("table_name = ? AND table_schema = 'public'", "migration_test_table").
-		Scan(context.Background(), &tableExists)
+	migrator := migrate.NewMigrator(db, migrations.Migrations)
 
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		log.Fatalf("Error checking table existence: %v", err)
-	}
-
-	if tableExists {
-		fmt.Println("✅ migration_test_table exists")
-
-		// Count records in the test table
-		var count int
-		err = db.NewSelect().
-			ColumnExpr("count(*)").
-			TableExpr("migration_test_table").
-			Scan(context.Background(), &count)
-
-		if err != nil {
-			log.Fatalf("Error counting records: %v", err)
-		}
-
-		fmt.Printf("✅ migration_test_table has %d record(s)\n", count)
-
-		// Show the records
-		var records []struct {
-			ID   int    `bun:"id"`
-			Name string `bun:"name"`
-		}
-
-		err = db.NewSelect().
-			Model(&records).
-			Table("migration_test_table").
-			Scan(context.Background())
-
-		if err != nil {
-			log.Fatalf("Error fetching records: %v", err)
-		}
-
-		fmt.Printf("📋 Records in migration_test_table:\n")
-		for _, record := range records {
-			fmt.Printf("   ID: %d, Name: %s\n", record.ID, record.Name)
-		}
-	} else {
-		fmt.Println("❌ migration_test_table does not exist")
-	}
-
-	// Check bun_migrations table
-	var migrationCount int
-	err = db.NewSelect().
-		ColumnExpr("count(*)").
-		TableExpr("bun_migrations").
-		Scan(context.Background(), &migrationCount)
-
+	// Get current status
+	ms, err := migrator.MigrationsWithStatus(context.Background())
 	if err != nil {
-		log.Fatalf("Error counting migrations: %v", err)
+		log.Fatalf("❌ Failed to get migration status: %v", err)
 	}
 
-	fmt.Printf("✅ bun_migrations table has %d migration(s) recorded\n", migrationCount)
-
-	// Check users table
-	var userCount int
-	err = db.NewSelect().
-		ColumnExpr("count(*)").
-		TableExpr("users").
-		Scan(context.Background(), &userCount)
-
-	if err != nil {
-		fmt.Printf("❌ Could not access users table: %v\n", err)
-	} else {
-		fmt.Printf("✅ users table has %d user(s)\n", userCount)
-	}
-
-	fmt.Println("==================================================")
-	fmt.Println("✅ Database verification complete!")
-}
-
-func deleteUser(email string) {
-	fmt.Printf("🗑️  DELETING USER WITH EMAIL: %s\n", email)
-	fmt.Println("==================================================")
-
-	db, err := getDBConnection()
-	if err != nil {
-		log.Fatal("❌ ", err)
-	}
-	defer db.Close()
-
-	// First, check if user exists
-	var userExists bool
-	err = db.NewSelect().
-		ColumnExpr("true").
-		TableExpr("users").
-		Where("user_id = ?", email).
-		Scan(context.Background(), &userExists)
-
-	if err != nil && err.Error() != "sql: no rows in result set" {
-		log.Fatalf("Error checking user existence: %v", err)
-	}
-
-	if !userExists {
-		fmt.Printf("❌ User with email '%s' not found\n", email)
+	applied := ms.Applied()
+	if len(applied) == 0 {
+		fmt.Println("✅ No migrations have been applied yet")
 		return
 	}
 
-	// Get user details before deletion
-	var user struct {
-		DisplayName string `bun:"display_name"`
-		UserID      string `bun:"user_id"`
+	fmt.Printf(" Found %d applied migration(s)\n", len(applied))
+
+	// Check each applied migration
+	for _, m := range applied {
+		fmt.Printf("   - %s\n", m.Name)
 	}
 
-	err = db.NewSelect().
-		Model(&user).
-		Table("users").
-		Where("user_id = ?", email).
-		Scan(context.Background())
+	fmt.Println("✅ Verification completed")
+}
 
-	if err != nil {
-		log.Fatalf("Error getting user details: %v", err)
+// capitalizeFirst capitalizes the first letter of a string
+func capitalizeFirst(s string) string {
+	if s == "" {
+		return s
 	}
-
-	fmt.Printf("👤 Found user: %s (%s)\n", user.DisplayName, user.UserID)
-
-	// Delete the user
-	result, err := db.NewDelete().
-		Table("users").
-		Where("user_id = ?", email).
-		Exec(context.Background())
-
-	if err != nil {
-		log.Fatalf("Error deleting user: %v", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		log.Fatalf("Error getting affected rows: %v", err)
-	}
-
-	if rowsAffected > 0 {
-		fmt.Printf("✅ Successfully deleted %d user(s) with email '%s'\n", rowsAffected, email)
-	} else {
-		fmt.Printf("❌ No users were deleted with email '%s'\n", email)
-	}
-
-	fmt.Println("==================================================")
+	return strings.ToUpper(s[:1]) + s[1:]
 }
